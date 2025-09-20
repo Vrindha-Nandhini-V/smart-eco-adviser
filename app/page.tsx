@@ -20,7 +20,7 @@ export default function HomePage() {
               </div>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-balance mb-6">
-              Your Smart <span className="text-primary">Eco Adviser</span>
+              Smart <span className="text-primary">Eco Adviser</span>
             </h1>
             <p className="text-xl text-muted-foreground text-balance mb-8">
               Calculate your carbon footprint, get personalized eco-friendly recommendations, and join challenges to
