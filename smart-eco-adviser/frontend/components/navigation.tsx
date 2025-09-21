@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Calculator, Home, Lightbulb, Trophy, MessageCircle, BarChart3, Menu, Leaf } from "lucide-react"
+import { Calculator, Home, Lightbulb, Trophy, MessageCircle, BarChart3, Menu, Leaf, LogIn, UserPlus } from "lucide-react"
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },
@@ -48,6 +48,21 @@ export function Navigation() {
               </Link>
             )
           })}
+
+          {/* Add Login & Signup */}
+          <Link href="/login">
+            <Button variant={pathname === "/login" ? "default" : "ghost"} size="sm" className="flex items-center space-x-2">
+              <LogIn className="h-4 w-4" />
+              <span>Login</span>
+            </Button>
+          </Link>
+
+          <Link href="/signup">
+            <Button variant={pathname === "/signup" ? "default" : "ghost"} size="sm" className="flex items-center space-x-2">
+              <UserPlus className="h-4 w-4" />
+              <span>Signup</span>
+            </Button>
+          </Link>
         </nav>
 
         <div className="flex items-center space-x-2">
@@ -76,6 +91,21 @@ export function Navigation() {
                     </Link>
                   )
                 })}
+
+                {/* Mobile Login & Signup */}
+                <Link href="/login" onClick={() => setIsOpen(false)}>
+                  <Button variant={pathname === "/login" ? "default" : "ghost"} className="w-full justify-start space-x-2">
+                    <LogIn className="h-4 w-4" />
+                    <span>Login</span>
+                  </Button>
+                </Link>
+
+                <Link href="/signup" onClick={() => setIsOpen(false)}>
+                  <Button variant={pathname === "/signup" ? "default" : "ghost"} className="w-full justify-start space-x-2">
+                    <UserPlus className="h-4 w-4" />
+                    <span>Signup</span>
+                  </Button>
+                </Link>
               </div>
             </SheetContent>
           </Sheet>
