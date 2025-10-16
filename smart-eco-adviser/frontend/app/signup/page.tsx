@@ -1,9 +1,15 @@
 "use client"
+
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
 import { toast } from "@/hooks/use-toast"
+import { Leaf, Mail, Lock, User } from "lucide-react"
+import Link from "next/link"
+import { authAPI } from "@/lib/api"
 
 export default function SignupPage() {
   const [email, setEmail] = useState("")
@@ -15,34 +21,101 @@ export default function SignupPage() {
   const handleSignup = async () => {
     setLoading(true)
     try {
-      const res = await fetch("http://localhost:5000/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password })
-      })
-      const data = await res.json()
-      if (res.ok && data.token) {
+      const data = await authAPI.signup(name, email, password);
+      
+      if (data.token) {
         localStorage.setItem("token", data.token)
+        localStorage.setItem("user", JSON.stringify(data.user))
         toast({ title: "Signup Successful", description: "Welcome!" })
         router.push("/") // redirect after signup
-      } else {
-        toast({ title: "Signup Failed", description: data.error || "Could not create account", variant: "destructive" })
       }
-    } catch (err) {
-      toast({ title: "Signup Error", description: "Server error", variant: "destructive" })
+    } catch (err: any) {
+      toast({ title: "Signup Error", description: err.message || "Server error", variant: "destructive" })
     }
     setLoading(false)
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="max-w-md w-full p-8 bg-white rounded shadow">
-        <h2 className="text-xl font-bold mb-6">Sign Up</h2>
-        <Input placeholder="Name" value={name} onChange={e => setName(e.target.value)} className="mb-4" />
-        <Input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} type="email" className="mb-4" />
-        <Input placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} type="password" className="mb-4" />
-        <Button className="w-full" onClick={handleSignup} disabled={loading}>{loading ? "Signing up..." : "Sign Up"}</Button>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+      
+      <Card className="w-full max-w-md relative shadow-xl border-green-200">
+        <CardHeader className="space-y-1 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600">
+              <Leaf className="h-8 w-8 text-white" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold">Join Us</CardTitle>
+          <CardDescription>
+            Start your sustainable lifestyle today
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="name"
+                placeholder="Your name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                type="email"
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                type="password"
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          <Button 
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700" 
+            onClick={handleSignup} 
+            disabled={loading}
+          >
+            {loading ? "Signing up..." : "Sign Up"}
+          </Button>
+
+          <div className="text-center text-sm">
+            <p className="text-muted-foreground">
+              Already have an account?{" "}
+              <Link href="/login" className="text-green-600 font-semibold hover:underline">
+                Login
+              </Link>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
+
+//signup/page.tsx

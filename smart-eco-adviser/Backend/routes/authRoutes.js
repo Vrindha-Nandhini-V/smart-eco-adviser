@@ -14,3 +14,6 @@ router.get("/dashboard", protect, (req, res) => {
 });
 
 module.exports = router;
+
+
+//authRoutes.js

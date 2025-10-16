@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Calculator, Home, Lightbulb, Trophy, MessageCircle, BarChart3, Menu, Leaf, LogIn, UserPlus } from "lucide-react"
+import { Calculator, Home, Lightbulb, Trophy, MessageCircle, BarChart3, Menu, Leaf, LogIn, UserPlus, LogOut, Shield } from "lucide-react"
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },
@@ -19,7 +19,23 @@ const navigation = [
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
   const pathname = usePathname()
+  const router = useRouter()
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      setUser(JSON.parse(userStr))
+    }
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setUser(null)
+    router.push('/login')
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -49,20 +65,37 @@ export function Navigation() {
             )
           })}
 
-          {/* Add Login & Signup */}
-          <Link href="/login">
-            <Button variant={pathname === "/login" ? "default" : "ghost"} size="sm" className="flex items-center space-x-2">
-              <LogIn className="h-4 w-4" />
-              <span>Login</span>
-            </Button>
-          </Link>
-
-          <Link href="/signup">
-            <Button variant={pathname === "/signup" ? "default" : "ghost"} size="sm" className="flex items-center space-x-2">
-              <UserPlus className="h-4 w-4" />
-              <span>Signup</span>
-            </Button>
-          </Link>
+          {user ? (
+            <>
+              {user.role === 'admin' && (
+                <Link href="/admin">
+                  <Button variant={pathname === "/admin" ? "default" : "ghost"} size="sm" className="flex items-center space-x-2">
+                    <Shield className="h-4 w-4" />
+                    <span>Admin</span>
+                  </Button>
+                </Link>
+              )}
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="flex items-center space-x-2">
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button variant={pathname === "/login" ? "default" : "ghost"} size="sm" className="flex items-center space-x-2">
+                  <LogIn className="h-4 w-4" />
+                  <span>Login</span>
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button variant={pathname === "/signup" ? "default" : "ghost"} size="sm" className="flex items-center space-x-2">
+                  <UserPlus className="h-4 w-4" />
+                  <span>Signup</span>
+                </Button>
+              </Link>
+            </>
+          )}
         </nav>
 
         <div className="flex items-center space-x-2">
@@ -92,20 +125,37 @@ export function Navigation() {
                   )
                 })}
 
-                {/* Mobile Login & Signup */}
-                <Link href="/login" onClick={() => setIsOpen(false)}>
-                  <Button variant={pathname === "/login" ? "default" : "ghost"} className="w-full justify-start space-x-2">
-                    <LogIn className="h-4 w-4" />
-                    <span>Login</span>
-                  </Button>
-                </Link>
-
-                <Link href="/signup" onClick={() => setIsOpen(false)}>
-                  <Button variant={pathname === "/signup" ? "default" : "ghost"} className="w-full justify-start space-x-2">
-                    <UserPlus className="h-4 w-4" />
-                    <span>Signup</span>
-                  </Button>
-                </Link>
+                {user ? (
+                  <>
+                    {user.role === 'admin' && (
+                      <Link href="/admin" onClick={() => setIsOpen(false)}>
+                        <Button variant={pathname === "/admin" ? "default" : "ghost"} className="w-full justify-start space-x-2">
+                          <Shield className="h-4 w-4" />
+                          <span>Admin</span>
+                        </Button>
+                      </Link>
+                    )}
+                    <Button variant="ghost" onClick={() => { handleLogout(); setIsOpen(false); }} className="w-full justify-start space-x-2">
+                      <LogOut className="h-4 w-4" />
+                      <span>Logout</span>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" onClick={() => setIsOpen(false)}>
+                      <Button variant={pathname === "/login" ? "default" : "ghost"} className="w-full justify-start space-x-2">
+                        <LogIn className="h-4 w-4" />
+                        <span>Login</span>
+                      </Button>
+                    </Link>
+                    <Link href="/signup" onClick={() => setIsOpen(false)}>
+                      <Button variant={pathname === "/signup" ? "default" : "ghost"} className="w-full justify-start space-x-2">
+                        <UserPlus className="h-4 w-4" />
+                        <span>Signup</span>
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>
@@ -114,3 +164,6 @@ export function Navigation() {
     </header>
   )
 }
+
+
+//navigation.tsx in components
