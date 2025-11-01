@@ -5,8 +5,17 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Calculator, Home, Lightbulb, Trophy, MessageCircle, BarChart3, Menu, Leaf, LogIn, UserPlus, LogOut, Shield } from "lucide-react"
+import { Calculator, Home, Lightbulb, Trophy, MessageCircle, BarChart3, Menu, Leaf, LogIn, UserPlus, LogOut, Shield, User, Settings } from "lucide-react"
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },
@@ -75,10 +84,46 @@ export function Navigation() {
                   </Button>
                 </Link>
               )}
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="flex items-center space-x-2">
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src="" alt={user.name} />
+                      <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+                        {user.name?.charAt(0).toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings" className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <>
@@ -98,8 +143,20 @@ export function Navigation() {
           )}
         </nav>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 md:space-x-4">
           <ThemeToggle />
+          
+          {/* Desktop Logout Button (Fallback if dropdown doesn't work) */}
+          {user && (
+            <div className="hidden md:flex items-center space-x-3">
+              <span className="text-sm text-muted-foreground">
+                {user.name}
+              </span>
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-1" /> Logout
+              </Button>
+            </div>
+          )}
 
           {/* Mobile Navigation */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>

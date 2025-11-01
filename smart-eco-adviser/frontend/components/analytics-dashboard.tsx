@@ -175,6 +175,53 @@ export function AnalyticsDashboard() {
   const ecoActions = analyticsData.ecoActions || 0
   const completedChallenges = analyticsData.completedChallenges || 0
 
+  // Derive insights: month-over-month changes and top drivers
+  const hasPrevMonth = monthlyData.length >= 2
+  const last = monthlyData[monthlyData.length - 1]
+  const prev = hasPrevMonth ? monthlyData[monthlyData.length - 2] : null
+  const momChange = hasPrevMonth ? (parseFloat(last.footprint) - parseFloat(prev!.footprint)) : 0
+  const momChangePct = hasPrevMonth && parseFloat(prev!.footprint) > 0
+    ? (momChange / parseFloat(prev!.footprint)) * 100
+    : 0
+
+  const deltas = hasPrevMonth ? [
+    { key: 'transportation', label: 'Transportation', color: COLORS.transportation, delta: parseFloat(last.transportation) - parseFloat(prev!.transportation) },
+    { key: 'energy', label: 'Energy', color: COLORS.energy, delta: parseFloat(last.energy) - parseFloat(prev!.energy) },
+    { key: 'diet', label: 'Diet', color: COLORS.diet, delta: parseFloat(last.diet) - parseFloat(prev!.diet) },
+    { key: 'waste', label: 'Waste', color: COLORS.waste, delta: parseFloat(last.waste) - parseFloat(prev!.waste) },
+  ] : []
+  const topIncrease = deltas.length ? deltas.slice().sort((a,b) => b.delta - a.delta)[0] : null
+  const topDecrease = deltas.length ? deltas.slice().sort((a,b) => a.delta - b.delta)[0] : null
+
+  const suggestions: { title: string; desc: string; href?: string }[] = []
+  if (topIncrease && topIncrease.delta > 0.01) {
+    if (topIncrease.key === 'transportation') {
+      suggestions.push({
+        title: 'Reduce car usage this month',
+        desc: 'Try public transit, carpooling, or one remote day per week to cut transport emissions.',
+        href: '/recommendations'
+      })
+    } else if (topIncrease.key === 'energy') {
+      suggestions.push({
+        title: 'Lower home energy footprint',
+        desc: 'Switch to LED, optimize AC temperature (24°C), and unplug idle devices.',
+        href: '/recommendations'
+      })
+    } else if (topIncrease.key === 'diet') {
+      suggestions.push({
+        title: 'Greener diet swaps',
+        desc: 'Add 2 plant-based meals per week and reduce red meat intake to lower emissions.',
+        href: '/recommendations'
+      })
+    } else if (topIncrease.key === 'waste') {
+      suggestions.push({
+        title: 'Improve waste management',
+        desc: 'Start composting and ensure proper segregation to reduce landfill impact.',
+        href: '/recommendations'
+      })
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Eco-themed Header with Gradient */}
@@ -513,6 +560,55 @@ export function AnalyticsDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Insights & Recommendations */}
+      <Card className="border-2">
+        <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+          <CardTitle className="flex items-center">
+            <Sparkles className="h-5 w-5 mr-2 text-green-600" />
+            Insights & Recommendations
+          </CardTitle>
+          <CardDescription>Automatically generated from your latest activity</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-lg border bg-white">
+              <p className="text-sm text-muted-foreground mb-1">Month-over-month change</p>
+              <div className={`text-2xl font-bold ${momChange <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                {momChange >= 0 ? '+' : ''}{momChange.toFixed(2)}t ({momChangePct >= 0 ? '+' : ''}{momChangePct.toFixed(1)}%)
+              </div>
+            </div>
+            <div className="p-4 rounded-lg border bg-white">
+              <p className="text-sm text-muted-foreground mb-1">Top increase driver</p>
+              <div className="text-2xl font-bold" style={{ color: topIncrease?.color || '#6b7280' }}>
+                {topIncrease ? `${topIncrease.label} ${topIncrease.delta >= 0 ? '+' : ''}${topIncrease.delta.toFixed(2)}t` : '—'}
+              </div>
+            </div>
+            <div className="p-4 rounded-lg border bg-white">
+              <p className="text-sm text-muted-foreground mb-1">Top decrease driver</p>
+              <div className="text-2xl font-bold" style={{ color: topDecrease?.color || '#6b7280' }}>
+                {topDecrease ? `${topDecrease.label} ${topDecrease.delta >= 0 ? '+' : ''}${topDecrease.delta.toFixed(2)}t` : '—'}
+              </div>
+            </div>
+          </div>
+
+          {suggestions.length > 0 && (
+            <div className="mt-2">
+              <h4 className="font-semibold mb-2">Suggested next actions</h4>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                {suggestions.map((s, idx) => (
+                  <li key={idx}>
+                    <span className="font-medium text-foreground">{s.title}:</span> {s.desc}
+                    {s.href && (
+                      <a href={s.href} className="ml-2 text-green-700 underline hover:no-underline">View tips</a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Eco Tips Banner */}
       <Card className="bg-gradient-to-r from-green-600 to-emerald-600 text-white border-0 shadow-xl">

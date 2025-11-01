@@ -150,6 +150,35 @@ export const ecoTipsAPI = {
   },
 };
 
+// User Profile APIs
+export const userAPI = {
+  getProfile: async () => {
+    const response = await fetch(`${API_BASE_URL}/user/profile`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch profile');
+    return response.json();
+  },
+
+  updateProfile: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/user/profile`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update profile');
+    return response.json();
+  },
+
+  getStats: async () => {
+    const response = await fetch(`${API_BASE_URL}/user/stats`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch user stats');
+    return response.json();
+  },
+};
+
 // Admin APIs
 export const adminAPI = {
   getAllUsers: async () => {

@@ -74,6 +74,32 @@ const login = async (req, res) => {
       return res.status(400).json({ error: "Invalid credentials" })
     }
 
+    // Update daily login streak
+    const now = new Date()
+    const prev = user.lastLoginAt ? new Date(user.lastLoginAt) : null
+
+    const normalize = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
+    const today = normalize(now)
+    let streak = user.streakCount || 0
+
+    if (!prev) {
+      streak = 1
+    } else {
+      const prevDay = normalize(prev)
+      const diffDays = Math.round((today - prevDay) / (1000 * 60 * 60 * 24))
+      if (diffDays === 0) {
+        // same day, keep streak
+      } else if (diffDays === 1) {
+        streak = streak + 1
+      } else {
+        streak = 1
+      }
+    }
+
+    user.streakCount = streak
+    user.lastLoginAt = now
+    await user.save()
+
     const token = generateToken(user._id)
     res.status(200).json({ 
       token,
@@ -81,7 +107,8 @@ const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        streakCount: user.streakCount
       }
     })
   } catch (error) {

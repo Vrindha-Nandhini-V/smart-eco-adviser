@@ -5,6 +5,9 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  // Daily login streak tracking
+  streakCount: { type: Number, default: 0 },
+  lastLoginAt: { type: Date },
   carbonFootprint: {
     current: { type: Number, default: 0 },
     history: [{

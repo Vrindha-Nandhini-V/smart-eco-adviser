@@ -9,6 +9,7 @@ const challengeRoutes = require("./routes/challengeRoutes");
 const carbonRoutes = require("./routes/carbonRoutes");
 const ecoTipsRoutes = require("./routes/ecoTipsRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const userRoutes = require("./routes/user");
 
 dotenv.config();
 const app = express();
@@ -36,6 +37,7 @@ app.use("/api/challenges", challengeRoutes);
 app.use("/api/carbon", carbonRoutes);
 app.use("/api/eco-tips", ecoTipsRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/user", userRoutes);
 
 // Health check route
 app.get("/", (req, res) => {

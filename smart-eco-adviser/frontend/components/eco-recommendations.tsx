@@ -58,18 +58,24 @@ export function EcoRecommendations() {
           const lat = position.coords.latitude
           const lon = position.coords.longitude
           
-          // Get city name from coordinates using reverse geocoding
-          try {
-            const response = await fetch(
-              `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || ''}`
-            )
-            const data = await response.json()
-            const city = data[0]?.name || "Your Location"
-            
-            setLocation({ lat, lon, city })
-            loadEcoTips(lat, lon, city)
-          } catch (error) {
-            console.error("Error getting city name:", error)
+          // If frontend OpenWeather API key is available, try reverse geocoding for city name.
+          // Otherwise, skip reverse geocoding and proceed with generic city label.
+          const openWeatherKey = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY
+          if (openWeatherKey) {
+            try {
+              const response = await fetch(
+                `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${openWeatherKey}`
+              )
+              const data = await response.json()
+              const city = data?.[0]?.name || "Your Location"
+              setLocation({ lat, lon, city })
+              loadEcoTips(lat, lon, city)
+            } catch (error) {
+              console.error("Error getting city name:", error)
+              setLocation({ lat, lon, city: "Your Location" })
+              loadEcoTips(lat, lon, "Your Location")
+            }
+          } else {
             setLocation({ lat, lon, city: "Your Location" })
             loadEcoTips(lat, lon, "Your Location")
           }
@@ -389,7 +395,8 @@ export function EcoRecommendations() {
       {/* Recommendations Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredRecommendations.map((rec) => {
-          const Icon = categoryIcons[rec.category]
+          // Fallback to a valid icon if an unknown category is received from API
+          const Icon = (categoryIcons as any)[rec.category] || Car
           return (
             <Card key={rec.id} className={rec.completed ? "border-green-200 bg-green-50/50" : ""}>
               <CardHeader>
