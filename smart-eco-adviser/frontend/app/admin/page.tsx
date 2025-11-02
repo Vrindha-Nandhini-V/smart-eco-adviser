@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { adminAPI, challengeAPI } from "@/lib/api"
-import { Users, Trophy, TrendingDown, Activity, Plus, Edit, Trash2, Eye } from "lucide-react"
+import { Users, Trophy, TrendingDown, Activity, Plus, Edit, Trash2, Eye, UserCog, Shield } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
 export default function AdminDashboard() {
@@ -35,6 +35,8 @@ export default function AdminDashboard() {
     duration: "1 day",
     maxProgress: 1
   })
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false)
 
   useEffect(() => {
     const user = localStorage.getItem('user')
@@ -112,6 +114,44 @@ export default function AdminDashboard() {
       toast({
         title: "Error",
         description: error.message || "Failed to delete challenge",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleUpdateUserRole = async (userId: string, newRole: string) => {
+    try {
+      await adminAPI.updateUserRole(userId, newRole)
+      toast({
+        title: "Success",
+        description: `User role updated to ${newRole}`
+      })
+      setIsRoleDialogOpen(false)
+      setSelectedUser(null)
+      loadData()
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user role",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (!confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) return
+    
+    try {
+      await adminAPI.deleteUser(userId)
+      toast({
+        title: "Success",
+        description: "User deleted successfully"
+      })
+      loadData()
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user",
         variant: "destructive"
       })
     }
@@ -235,6 +275,27 @@ export default function AdminDashboard() {
                           <div className="text-center">
                             <p className="font-semibold text-orange-600">{user.activeChallenges}</p>
                             <p className="text-muted-foreground">Active</p>
+                          </div>
+                          <div className="flex space-x-2 ml-4">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedUser(user)
+                                setIsRoleDialogOpen(true)
+                              }}
+                              title="Change Role"
+                            >
+                              <UserCog className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteUser(user._id, user.name)}
+                              title="Delete User"
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -404,6 +465,56 @@ export default function AdminDashboard() {
               </div>
             </TabsContent>
           </Tabs>
+
+          {/* Role Change Dialog */}
+          <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Change User Role</DialogTitle>
+                <DialogDescription>
+                  Update the role for {selectedUser?.name}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Current Role</Label>
+                  <p className="text-sm text-muted-foreground">User</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Select New Role</Label>
+                  <Select
+                    defaultValue="user"
+                    onValueChange={(value) => {
+                      if (selectedUser) {
+                        handleUpdateUserRole(selectedUser._id, value)
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">
+                        <div className="flex items-center">
+                          <Users className="h-4 w-4 mr-2" />
+                          User
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="admin">
+                        <div className="flex items-center">
+                          <Shield className="h-4 w-4 mr-2" />
+                          Admin
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Admins have full access to manage users and challenges.
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
         </main>
       </div>
     </AuthWrapper>

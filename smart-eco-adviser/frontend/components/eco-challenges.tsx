@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { challengeAPI } from "@/lib/api"
+import { challengeAPI, userAPI } from "@/lib/api"
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -66,30 +66,29 @@ const statusColors = {
   completed: "bg-green-100 text-green-800",
 }
 
-const achievements = [
-  { id: "1", title: "First Steps", description: "Complete your first challenge", icon: Target, earned: true },
-  { id: "2", title: "Streak Master", description: "Complete 7 daily challenges in a row", icon: Zap, earned: true },
-  { id: "3", title: "Eco Warrior", description: "Complete 10 challenges", icon: Award, earned: false },
-  { id: "4", title: "Planet Saver", description: "Save 100kg of CO₂", icon: TreePine, earned: false },
-  { id: "5", title: "Community Leader", description: "Join 5 group challenges", icon: Users, earned: false },
-]
-
-const leaderboard = [
-  { rank: 1, name: "Alex Chen", points: 2450, avatar: "/placeholder.svg?height=32&width=32" },
-  { rank: 2, name: "Sarah Johnson", points: 2380, avatar: "/placeholder.svg?height=32&width=32" },
-  { rank: 3, name: "Mike Rodriguez", points: 2210, avatar: "/placeholder.svg?height=32&width=32" },
-  { rank: 4, name: "You", points: 1890, avatar: "/placeholder.svg?height=32&width=32" },
-  { rank: 5, name: "Emma Wilson", points: 1750, avatar: "/placeholder.svg?height=32&width=32" },
-]
+// Icon mapping for achievements
+const achievementIcons: Record<string, any> = {
+  Target,
+  Zap,
+  Award,
+  TreePine,
+  Users,
+  Trophy,
+  Leaf,
+  Star
+}
 
 export function EcoChallenges() {
   const [challenges, setChallenges] = useState<Challenge[]>([])
   const [userChallenges, setUserChallenges] = useState<any[]>([])
+  const [leaderboard, setLeaderboard] = useState<any[]>([])
+  const [achievements, setAchievements] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedTab, setSelectedTab] = useState("available")
 
   useEffect(() => {
     loadChallenges()
+    loadLeaderboardAndAchievements()
   }, [])
 
   const loadChallenges = async () => {
@@ -140,6 +139,45 @@ export function EcoChallenges() {
     }
   }
 
+  const loadLeaderboardAndAchievements = async () => {
+    try {
+      const [leaderboardData, achievementsData] = await Promise.all([
+        challengeAPI.getLeaderboard(),
+        userAPI.getAchievements()
+      ])
+      
+      // Format leaderboard data
+      const formattedLeaderboard = leaderboardData.leaderboard.map((user: any) => ({
+        rank: user.rank,
+        name: user.isCurrentUser ? "You" : user.name,
+        points: user.points,
+        co2Saved: user.co2Saved,
+        avatar: "/placeholder.svg",
+        isCurrentUser: user.isCurrentUser
+      }))
+      
+      // Add current user rank if not in top 10
+      if (leaderboardData.currentUserRank) {
+        formattedLeaderboard.push({
+          rank: leaderboardData.currentUserRank.rank,
+          name: "You",
+          points: leaderboardData.currentUserRank.points,
+          co2Saved: leaderboardData.currentUserRank.co2Saved,
+          avatar: "/placeholder.svg",
+          isCurrentUser: true
+        })
+      }
+      
+      setLeaderboard(formattedLeaderboard)
+      setAchievements(achievementsData.achievements)
+    } catch (error: any) {
+      console.error('Error loading leaderboard/achievements:', error)
+      // Set empty arrays on error
+      setLeaderboard([])
+      setAchievements([])
+    }
+  }
+
   const handleStartChallenge = async (challengeId: string) => {
     try {
       await challengeAPI.startChallenge(challengeId)
@@ -165,6 +203,7 @@ export function EcoChallenges() {
         description: "Keep up the great work!"
       })
       loadChallenges()
+      loadLeaderboardAndAchievements() // Refresh leaderboard and achievements
     } catch (error: any) {
       toast({
         title: "Error",
@@ -321,29 +360,35 @@ export function EcoChallenges() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {leaderboard.map((user) => (
-                    <div
-                      key={user.rank}
-                      className={`flex items-center justify-between p-3 rounded-lg ${
-                        user.name === "You" ? "bg-primary/10 border border-primary/20" : "bg-muted/50"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                          {user.rank}
-                        </div>
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={user.avatar || "/placeholder.svg"} />
-                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className={`font-medium ${user.name === "You" ? "text-primary" : ""}`}>{user.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span className="font-semibold">{user.points}</span>
-                      </div>
+                  {leaderboard.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      <p>No leaderboard data yet. Complete challenges to appear here!</p>
                     </div>
-                  ))}
+                  ) : (
+                    leaderboard.map((user) => (
+                      <div
+                        key={user.rank}
+                        className={`flex items-center justify-between p-3 rounded-lg ${
+                          user.isCurrentUser ? "bg-primary/10 border border-primary/20" : "bg-muted/50"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                            {user.rank}
+                          </div>
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.avatar || "/placeholder.svg"} />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span className={`font-medium ${user.isCurrentUser ? "text-primary" : ""}`}>{user.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Star className="h-4 w-4 text-yellow-500" />
+                          <span className="font-semibold">{user.points}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -359,34 +404,48 @@ export function EcoChallenges() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {achievements.map((achievement) => {
-                    const Icon = achievement.icon
-                    return (
-                      <div
-                        key={achievement.id}
-                        className={`flex items-center space-x-3 p-3 rounded-lg ${
-                          achievement.earned ? "bg-green-50 border border-green-200" : "bg-muted/50"
-                        }`}
-                      >
+                  {achievements.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      <p>Complete challenges to unlock achievements!</p>
+                    </div>
+                  ) : (
+                    achievements.map((achievement) => {
+                      const Icon = achievementIcons[achievement.icon] || Target
+                      return (
                         <div
-                          className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                            achievement.earned ? "bg-green-100" : "bg-muted"
+                          key={achievement.id}
+                          className={`flex items-center space-x-3 p-3 rounded-lg ${
+                            achievement.earned ? "bg-green-50 border border-green-200" : "bg-muted/50"
                           }`}
                         >
-                          <Icon
-                            className={`h-5 w-5 ${achievement.earned ? "text-green-600" : "text-muted-foreground"}`}
-                          />
+                          <div
+                            className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                              achievement.earned ? "bg-green-100" : "bg-muted"
+                            }`}
+                          >
+                            <Icon
+                              className={`h-5 w-5 ${achievement.earned ? "text-green-600" : "text-muted-foreground"}`}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className={`font-medium ${achievement.earned ? "text-green-800" : ""}`}>
+                              {achievement.title}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">{achievement.description}</p>
+                            {!achievement.earned && achievement.progress !== undefined && achievement.target && (
+                              <div className="mt-1">
+                                <Progress value={(achievement.progress / achievement.target) * 100} className="h-1" />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {achievement.progress} / {achievement.target}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          {achievement.earned && <CheckCircle className="h-5 w-5 text-green-600" />}
                         </div>
-                        <div className="flex-1">
-                          <h4 className={`font-medium ${achievement.earned ? "text-green-800" : ""}`}>
-                            {achievement.title}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                        </div>
-                        {achievement.earned && <CheckCircle className="h-5 w-5 text-green-600" />}
-                      </div>
-                    )
-                  })}
+                      )
+                    })
+                  )}
                 </div>
               </CardContent>
             </Card>

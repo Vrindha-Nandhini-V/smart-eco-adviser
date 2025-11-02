@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { Calculator, Lightbulb, Trophy, MessageCircle, BarChart3, Leaf, TreePine, Recycle, Zap, Globe, Users, TrendingUp } from "lucide-react"
+import { Calculator, Lightbulb, Trophy, MessageCircle, BarChart3, TreePine } from "lucide-react"
 
 export default function HomePage() {
   return (
@@ -18,57 +18,16 @@ export default function HomePage() {
           {/* Welcome Card */}
           <DashboardWelcome />
 
-          {/* Impact Stats */}
-          <section className="py-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card className="border-2 hover:shadow-lg transition-all">
-                <CardContent className="pt-6 text-center">
-                  <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
-                    <Users className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div className="text-3xl font-bold mb-1">10,000+</div>
-                  <p className="text-sm text-muted-foreground">Active Users</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-2 hover:shadow-lg transition-all">
-                <CardContent className="pt-6 text-center">
-                  <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center">
-                    <Globe className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="text-3xl font-bold mb-1">500t</div>
-                  <p className="text-sm text-muted-foreground">CO₂ Reduced</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-2 hover:shadow-lg transition-all">
-                <CardContent className="pt-6 text-center">
-                  <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                    <Trophy className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div className="text-3xl font-bold mb-1">50,000+</div>
-                  <p className="text-sm text-muted-foreground">Challenges Completed</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-2 hover:shadow-lg transition-all">
-                <CardContent className="pt-6 text-center">
-                  <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-                    <TrendingUp className="h-6 w-6 text-amber-600" />
-                  </div>
-                  <div className="text-3xl font-bold mb-1">85%</div>
-                  <p className="text-sm text-muted-foreground">Success Rate</p>
-                </CardContent>
-              </Card>
-            </div>
-          </section>
-
           {/* Features Grid */}
-          <section className="py-8">
+          <section className="py-12">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Everything You Need for a Sustainable Lifestyle</h2>
+              <Badge className="mb-4 px-4 py-2 text-sm" variant="outline">
+                <TreePine className="h-4 w-4 mr-2" />
+                Smart Eco Adviser
+              </Badge>
+              <h2 className="text-4xl font-bold mb-4">Your Complete Sustainability Toolkit</h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Comprehensive tools and resources to help you reduce your environmental impact
+                Powerful features to help you track, reduce, and optimize your environmental footprint
               </p>
             </div>
 
@@ -106,8 +65,8 @@ export default function HomePage() {
                 },
                 {
                   icon: TreePine,
-                  title: "Community Impact",
-                  description: "See how your actions contribute to global environmental goals",
+                  title: "Environmental Impact",
+                  description: "Monitor and visualize your positive impact on the environment",
                   color: "from-teal-500 to-cyan-500"
                 }
               ].map((feature, idx) => {
@@ -133,21 +92,21 @@ export default function HomePage() {
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
               <CardContent className="p-12 relative z-10 text-center">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Make a Difference?</h2>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">Start Your Sustainability Journey</h2>
                 <p className="text-green-50 text-lg mb-8 max-w-2xl mx-auto">
-                  Join thousands of eco-warriors making a positive impact on our planet every day
+                  Calculate your carbon footprint, get personalized recommendations, and track your progress
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link href="/calculator">
                     <Button size="lg" variant="secondary" className="w-full sm:w-auto">
                       <Calculator className="mr-2 h-5 w-5" />
-                      Start Your Journey
+                      Calculate Footprint
                     </Button>
                   </Link>
                   <Link href="/challenges">
                     <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white/10 hover:bg-white/20 border-white/30 text-white">
                       <Trophy className="mr-2 h-5 w-5" />
-                      View Challenges
+                      Explore Challenges
                     </Button>
                   </Link>
                 </div>

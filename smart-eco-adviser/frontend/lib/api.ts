@@ -132,6 +132,14 @@ export const challengeAPI = {
     if (!response.ok) throw new Error('Failed to delete challenge');
     return response.json();
   },
+
+  getLeaderboard: async () => {
+    const response = await fetch(`${API_BASE_URL}/challenges/leaderboard`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch leaderboard');
+    return response.json();
+  },
 };
 
 // Eco Tips APIs
@@ -177,6 +185,14 @@ export const userAPI = {
     if (!response.ok) throw new Error('Failed to fetch user stats');
     return response.json();
   },
+
+  getAchievements: async () => {
+    const response = await fetch(`${API_BASE_URL}/user/achievements`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch achievements');
+    return response.json();
+  },
 };
 
 // Admin APIs
@@ -202,6 +218,57 @@ export const adminAPI = {
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch stats');
+    return response.json();
+  },
+
+  updateUserRole: async (userId: string, role: string) => {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ role }),
+    });
+    if (!response.ok) throw new Error('Failed to update user role');
+    return response.json();
+  },
+
+  deleteUser: async (userId: string) => {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete user');
+    return response.json();
+  },
+
+  getChallengeAnalytics: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/challenges/analytics`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch challenge analytics');
+    return response.json();
+  },
+
+  getPlatformTrends: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/trends`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch platform trends');
+    return response.json();
+  },
+
+  getUserActivities: async (limit: number = 20) => {
+    const response = await fetch(`${API_BASE_URL}/admin/activities?limit=${limit}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch user activities');
+    return response.json();
+  },
+
+  getTopUsers: async (limit: number = 10) => {
+    const response = await fetch(`${API_BASE_URL}/admin/top-users?limit=${limit}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch top users');
     return response.json();
   },
 };
