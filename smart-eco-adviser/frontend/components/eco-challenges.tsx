@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { challengeAPI, userAPI } from "@/lib/api"
+import { toast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -44,103 +46,7 @@ interface Challenge {
   participants?: number
 }
 
-const challenges: Challenge[] = [
-  {
-    id: "1",
-    title: "Walk or Bike to Work",
-    description: "Use active transportation for your daily commute instead of driving",
-    category: "transportation",
-    type: "daily",
-    difficulty: "easy",
-    points: 50,
-    co2Impact: 2.5,
-    duration: "Today",
-    progress: 0,
-    maxProgress: 1,
-    status: "not_started",
-    participants: 1247,
-  },
-  {
-    id: "2",
-    title: "Unplug Electronics",
-    description: "Unplug all non-essential electronics when leaving home",
-    category: "energy",
-    type: "daily",
-    difficulty: "easy",
-    points: 30,
-    co2Impact: 0.8,
-    duration: "Today",
-    progress: 1,
-    maxProgress: 1,
-    status: "completed",
-    participants: 892,
-  },
-  {
-    id: "3",
-    title: "Meatless Week",
-    description: "Go vegetarian for an entire week and discover new plant-based recipes",
-    category: "diet",
-    type: "weekly",
-    difficulty: "medium",
-    points: 200,
-    co2Impact: 12.5,
-    duration: "7 days",
-    progress: 3,
-    maxProgress: 7,
-    status: "in_progress",
-    startDate: "2024-01-15",
-    endDate: "2024-01-22",
-    participants: 456,
-  },
-  {
-    id: "4",
-    title: "Zero Waste Challenge",
-    description: "Produce no landfill waste for an entire week",
-    category: "waste",
-    type: "weekly",
-    difficulty: "hard",
-    points: 300,
-    co2Impact: 8.2,
-    duration: "7 days",
-    progress: 0,
-    maxProgress: 7,
-    status: "not_started",
-    participants: 234,
-  },
-  {
-    id: "5",
-    title: "Energy Efficiency Month",
-    description: "Reduce your home energy consumption by 20% this month",
-    category: "energy",
-    type: "monthly",
-    difficulty: "medium",
-    points: 500,
-    co2Impact: 45.0,
-    duration: "30 days",
-    progress: 12,
-    maxProgress: 30,
-    status: "in_progress",
-    startDate: "2024-01-01",
-    endDate: "2024-01-31",
-    participants: 789,
-  },
-  {
-    id: "6",
-    title: "Public Transport Champion",
-    description: "Use only public transportation for all trips this month",
-    category: "transportation",
-    type: "monthly",
-    difficulty: "hard",
-    points: 600,
-    co2Impact: 85.0,
-    duration: "30 days",
-    progress: 0,
-    maxProgress: 30,
-    status: "not_started",
-    participants: 123,
-  },
-]
-
+// Move these outside the component so ChallengeCard can access them
 const categoryIcons = {
   transportation: Car,
   energy: Home,
@@ -160,59 +66,167 @@ const statusColors = {
   completed: "bg-green-100 text-green-800",
 }
 
-const achievements = [
-  { id: "1", title: "First Steps", description: "Complete your first challenge", icon: Target, earned: true },
-  { id: "2", title: "Streak Master", description: "Complete 7 daily challenges in a row", icon: Zap, earned: true },
-  { id: "3", title: "Eco Warrior", description: "Complete 10 challenges", icon: Award, earned: false },
-  { id: "4", title: "Planet Saver", description: "Save 100kg of CO₂", icon: TreePine, earned: false },
-  { id: "5", title: "Community Leader", description: "Join 5 group challenges", icon: Users, earned: false },
-]
-
-const leaderboard = [
-  { rank: 1, name: "Alex Chen", points: 2450, avatar: "/placeholder.svg?height=32&width=32" },
-  { rank: 2, name: "Sarah Johnson", points: 2380, avatar: "/placeholder.svg?height=32&width=32" },
-  { rank: 3, name: "Mike Rodriguez", points: 2210, avatar: "/placeholder.svg?height=32&width=32" },
-  { rank: 4, name: "You", points: 1890, avatar: "/placeholder.svg?height=32&width=32" },
-  { rank: 5, name: "Emma Wilson", points: 1750, avatar: "/placeholder.svg?height=32&width=32" },
-]
+// Icon mapping for achievements
+const achievementIcons: Record<string, any> = {
+  Target,
+  Zap,
+  Award,
+  TreePine,
+  Users,
+  Trophy,
+  Leaf,
+  Star
+}
 
 export function EcoChallenges() {
-  const [selectedTab, setSelectedTab] = useState("active")
-  const [challengesList, setChallengesList] = useState(challenges)
+  const [challenges, setChallenges] = useState<Challenge[]>([])
+  const [userChallenges, setUserChallenges] = useState<any[]>([])
+  const [leaderboard, setLeaderboard] = useState<any[]>([])
+  const [achievements, setAchievements] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedTab, setSelectedTab] = useState("available")
 
-  const startChallenge = (id: string) => {
-    setChallengesList((prev) =>
-      prev.map((challenge) =>
-        challenge.id === id
-          ? {
-              ...challenge,
-              status: "in_progress" as const,
-              startDate: new Date().toISOString().split("T")[0],
-            }
-          : challenge,
-      ),
-    )
-  }
+  useEffect(() => {
+    loadChallenges()
+    loadLeaderboardAndAchievements()
+  }, [])
 
-  const updateProgress = (id: string) => {
-    setChallengesList((prev) =>
-      prev.map((challenge) => {
-        if (challenge.id === id && challenge.status === "in_progress") {
-          const newProgress = Math.min(challenge.progress + 1, challenge.maxProgress)
-          return {
-            ...challenge,
-            progress: newProgress,
-            status: newProgress === challenge.maxProgress ? ("completed" as const) : challenge.status,
-          }
+  const loadChallenges = async () => {
+    try {
+      const [allChallenges, userChalls] = await Promise.all([
+        challengeAPI.getChallenges(),
+        challengeAPI.getUserChallenges()
+      ])
+      
+      // Map backend data to frontend format
+      const mappedChallenges = allChallenges.map((c: any) => ({
+        id: c._id,
+        title: c.title,
+        description: c.description,
+        category: c.category,
+        type: c.type,
+        difficulty: c.difficulty,
+        points: c.points,
+        co2Impact: c.co2Impact,
+        duration: c.duration,
+        progress: 0,
+        maxProgress: c.maxProgress,
+        status: "not_started" as const,
+        participants: Math.floor(Math.random() * 1000) + 100
+      }))
+
+      // Update status based on user challenges
+      userChalls.forEach((uc: any) => {
+        const challenge = mappedChallenges.find((c: Challenge) => c.id === uc.challengeId._id)
+        if (challenge) {
+          challenge.status = uc.status
+          challenge.progress = uc.progress
+          challenge.startDate = uc.startDate
+          challenge.endDate = uc.endDate
         }
-        return challenge
-      }),
+      })
+
+      setChallenges(mappedChallenges)
+      setUserChallenges(userChalls)
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load challenges",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadLeaderboardAndAchievements = async () => {
+    try {
+      const [leaderboardData, achievementsData] = await Promise.all([
+        challengeAPI.getLeaderboard(),
+        userAPI.getAchievements()
+      ])
+      
+      // Format leaderboard data
+      const formattedLeaderboard = leaderboardData.leaderboard.map((user: any) => ({
+        rank: user.rank,
+        name: user.isCurrentUser ? "You" : user.name,
+        points: user.points,
+        co2Saved: user.co2Saved,
+        avatar: "/placeholder.svg",
+        isCurrentUser: user.isCurrentUser
+      }))
+      
+      // Add current user rank if not in top 10
+      if (leaderboardData.currentUserRank) {
+        formattedLeaderboard.push({
+          rank: leaderboardData.currentUserRank.rank,
+          name: "You",
+          points: leaderboardData.currentUserRank.points,
+          co2Saved: leaderboardData.currentUserRank.co2Saved,
+          avatar: "/placeholder.svg",
+          isCurrentUser: true
+        })
+      }
+      
+      setLeaderboard(formattedLeaderboard)
+      setAchievements(achievementsData.achievements)
+    } catch (error: any) {
+      console.error('Error loading leaderboard/achievements:', error)
+      // Set empty arrays on error
+      setLeaderboard([])
+      setAchievements([])
+    }
+  }
+
+  const handleStartChallenge = async (challengeId: string) => {
+    try {
+      await challengeAPI.startChallenge(challengeId)
+      toast({
+        title: "Challenge Started!",
+        description: "Good luck on your eco-friendly journey!"
+      })
+      loadChallenges()
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start challenge",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleUpdateProgress = async (challengeId: string, newProgress: number) => {
+    try {
+      await challengeAPI.updateProgress(challengeId, newProgress)
+      toast({
+        title: "Progress Updated!",
+        description: "Keep up the great work!"
+      })
+      loadChallenges()
+      loadLeaderboardAndAchievements() // Refresh leaderboard and achievements
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update progress",
+        variant: "destructive"
+      })
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
+          <p className="text-muted-foreground">Loading challenges...</p>
+        </div>
+      </div>
     )
   }
 
-  const activeChallenges = challengesList.filter((c) => c.status === "in_progress")
-  const completedChallenges = challengesList.filter((c) => c.status === "completed")
-  const availableChallenges = challengesList.filter((c) => c.status === "not_started")
+  const activeChallenges = challenges.filter((c) => c.status === "in_progress")
+  const availableChallenges = challenges.filter((c) => c.status === "not_started")
+  const completedChallenges = challenges.filter((c) => c.status === "completed")
 
   const totalPoints = completedChallenges.reduce((sum, challenge) => sum + challenge.points, 0)
   const totalCO2Saved = completedChallenges.reduce((sum, challenge) => sum + challenge.co2Impact, 0)
@@ -288,8 +302,8 @@ export function EcoChallenges() {
                 <ChallengeCard
                   key={challenge.id}
                   challenge={challenge}
-                  onStart={() => startChallenge(challenge.id)}
-                  onProgress={() => updateProgress(challenge.id)}
+                  onStart={() => handleStartChallenge(challenge.id)}
+                  onProgress={() => handleUpdateProgress(challenge.id, challenge.progress + 1)}
                 />
               ))}
             </div>
@@ -302,8 +316,8 @@ export function EcoChallenges() {
               <ChallengeCard
                 key={challenge.id}
                 challenge={challenge}
-                onStart={() => startChallenge(challenge.id)}
-                onProgress={() => updateProgress(challenge.id)}
+                onStart={() => handleStartChallenge(challenge.id)}
+                onProgress={() => handleUpdateProgress(challenge.id, challenge.progress + 1)}
               />
             ))}
           </div>
@@ -325,8 +339,8 @@ export function EcoChallenges() {
                 <ChallengeCard
                   key={challenge.id}
                   challenge={challenge}
-                  onStart={() => startChallenge(challenge.id)}
-                  onProgress={() => updateProgress(challenge.id)}
+                  onStart={() => handleStartChallenge(challenge.id)}
+                  onProgress={() => handleUpdateProgress(challenge.id, challenge.progress + 1)}
                 />
               ))}
             </div>
@@ -346,29 +360,35 @@ export function EcoChallenges() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {leaderboard.map((user) => (
-                    <div
-                      key={user.rank}
-                      className={`flex items-center justify-between p-3 rounded-lg ${
-                        user.name === "You" ? "bg-primary/10 border border-primary/20" : "bg-muted/50"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                          {user.rank}
-                        </div>
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={user.avatar || "/placeholder.svg"} />
-                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className={`font-medium ${user.name === "You" ? "text-primary" : ""}`}>{user.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span className="font-semibold">{user.points}</span>
-                      </div>
+                  {leaderboard.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      <p>No leaderboard data yet. Complete challenges to appear here!</p>
                     </div>
-                  ))}
+                  ) : (
+                    leaderboard.map((user) => (
+                      <div
+                        key={user.rank}
+                        className={`flex items-center justify-between p-3 rounded-lg ${
+                          user.isCurrentUser ? "bg-primary/10 border border-primary/20" : "bg-muted/50"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                            {user.rank}
+                          </div>
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.avatar || "/placeholder.svg"} />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span className={`font-medium ${user.isCurrentUser ? "text-primary" : ""}`}>{user.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Star className="h-4 w-4 text-yellow-500" />
+                          <span className="font-semibold">{user.points}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -384,34 +404,48 @@ export function EcoChallenges() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {achievements.map((achievement) => {
-                    const Icon = achievement.icon
-                    return (
-                      <div
-                        key={achievement.id}
-                        className={`flex items-center space-x-3 p-3 rounded-lg ${
-                          achievement.earned ? "bg-green-50 border border-green-200" : "bg-muted/50"
-                        }`}
-                      >
+                  {achievements.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      <p>Complete challenges to unlock achievements!</p>
+                    </div>
+                  ) : (
+                    achievements.map((achievement) => {
+                      const Icon = achievementIcons[achievement.icon] || Target
+                      return (
                         <div
-                          className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                            achievement.earned ? "bg-green-100" : "bg-muted"
+                          key={achievement.id}
+                          className={`flex items-center space-x-3 p-3 rounded-lg ${
+                            achievement.earned ? "bg-green-50 border border-green-200" : "bg-muted/50"
                           }`}
                         >
-                          <Icon
-                            className={`h-5 w-5 ${achievement.earned ? "text-green-600" : "text-muted-foreground"}`}
-                          />
+                          <div
+                            className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                              achievement.earned ? "bg-green-100" : "bg-muted"
+                            }`}
+                          >
+                            <Icon
+                              className={`h-5 w-5 ${achievement.earned ? "text-green-600" : "text-muted-foreground"}`}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className={`font-medium ${achievement.earned ? "text-green-800" : ""}`}>
+                              {achievement.title}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">{achievement.description}</p>
+                            {!achievement.earned && achievement.progress !== undefined && achievement.target && (
+                              <div className="mt-1">
+                                <Progress value={(achievement.progress / achievement.target) * 100} className="h-1" />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {achievement.progress} / {achievement.target}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          {achievement.earned && <CheckCircle className="h-5 w-5 text-green-600" />}
                         </div>
-                        <div className="flex-1">
-                          <h4 className={`font-medium ${achievement.earned ? "text-green-800" : ""}`}>
-                            {achievement.title}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                        </div>
-                        {achievement.earned && <CheckCircle className="h-5 w-5 text-green-600" />}
-                      </div>
-                    )
-                  })}
+                      )
+                    })
+                  )}
                 </div>
               </CardContent>
             </Card>

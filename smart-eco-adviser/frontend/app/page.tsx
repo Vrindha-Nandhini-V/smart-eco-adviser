@@ -1,201 +1,123 @@
+// pages/index.tsx (or app/page.tsx)
+import AuthWrapper from "@/components/AuthWrapper"
 import { Navigation } from "@/components/navigation"
+import { DashboardWelcome } from "@/components/dashboard-welcome"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { Calculator, Lightbulb, Trophy, MessageCircle, BarChart3, Leaf, TreePine, Recycle, Zap } from "lucide-react"
+import { Calculator, Lightbulb, Trophy, MessageCircle, BarChart3, TreePine } from "lucide-react"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
+    <AuthWrapper>
+      <div className="min-h-screen bg-background">
+        <Navigation />
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Hero Section */}
-        <section className="text-center py-12 md:py-20">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex justify-center mb-6">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                <Leaf className="h-8 w-8 text-primary" />
-              </div>
+        <main className="container mx-auto px-4 py-8 space-y-12">
+          {/* Welcome Card */}
+          <DashboardWelcome />
+
+          {/* Features Grid */}
+          <section className="py-12">
+            <div className="text-center mb-12">
+              <Badge className="mb-4 px-4 py-2 text-sm" variant="outline">
+                <TreePine className="h-4 w-4 mr-2" />
+                Smart Eco Adviser
+              </Badge>
+              <h2 className="text-4xl font-bold mb-4">Your Complete Sustainability Toolkit</h2>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                Powerful features to help you track, reduce, and optimize your environmental footprint
+              </p>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-balance mb-6">
-              Your Smart <span className="text-primary">Eco Adviser</span>
-            </h1>
-            <p className="text-xl text-muted-foreground text-balance mb-8">
-              Calculate your carbon footprint, get personalized eco-friendly recommendations, and join challenges to
-              make a positive impact on our planet.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/calculator">
-                <Button size="lg" className="w-full sm:w-auto">
-                  <Calculator className="mr-2 h-5 w-5" />
-                  Calculate Footprint
-                </Button>
-              </Link>
-              <Link href="/recommendations">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto bg-transparent">
-                  <Lightbulb className="mr-2 h-5 w-5" />
-                  Get Eco Tips
-                </Button>
-              </Link>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                {
+                  icon: Calculator,
+                  title: "Carbon Calculator",
+                  description: "Accurately measure your carbon footprint across transportation, energy, diet, and waste",
+                  color: "from-blue-500 to-cyan-500"
+                },
+                {
+                  icon: Lightbulb,
+                  title: "Smart Recommendations",
+                  description: "Get personalized eco-friendly tips based on your location and lifestyle",
+                  color: "from-amber-500 to-orange-500"
+                },
+                {
+                  icon: Trophy,
+                  title: "Eco Challenges",
+                  description: "Join daily, weekly, and monthly challenges to build sustainable habits",
+                  color: "from-purple-500 to-pink-500"
+                },
+                {
+                  icon: MessageCircle,
+                  title: "AI Chat Assistant",
+                  description: "Ask questions and get instant answers about sustainable living",
+                  color: "from-green-500 to-emerald-500"
+                },
+                {
+                  icon: BarChart3,
+                  title: "Analytics Dashboard",
+                  description: "Track your progress with detailed insights and visualizations",
+                  color: "from-indigo-500 to-blue-500"
+                },
+                {
+                  icon: TreePine,
+                  title: "Environmental Impact",
+                  description: "Monitor and visualize your positive impact on the environment",
+                  color: "from-teal-500 to-cyan-500"
+                }
+              ].map((feature, idx) => {
+                const Icon = feature.icon
+                return (
+                  <Card key={idx} className="border-2 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <CardHeader>
+                      <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-lg`}>
+                        <Icon className="h-7 w-7 text-white" />
+                      </div>
+                      <CardTitle className="text-xl">{feature.title}</CardTitle>
+                      <CardDescription className="text-base">{feature.description}</CardDescription>
+                    </CardHeader>
+                  </Card>
+                )
+              })}
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Stats Section */}
-        <section className="py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="flex justify-center mb-2">
-                  <TreePine className="h-8 w-8 text-primary" />
+          {/* CTA Section */}
+          <section className="py-12">
+            <Card className="border-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+              <CardContent className="p-12 relative z-10 text-center">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">Start Your Sustainability Journey</h2>
+                <p className="text-green-50 text-lg mb-8 max-w-2xl mx-auto">
+                  Calculate your carbon footprint, get personalized recommendations, and track your progress
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link href="/calculator">
+                    <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                      <Calculator className="mr-2 h-5 w-5" />
+                      Calculate Footprint
+                    </Button>
+                  </Link>
+                  <Link href="/challenges">
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white/10 hover:bg-white/20 border-white/30 text-white">
+                      <Trophy className="mr-2 h-5 w-5" />
+                      Explore Challenges
+                    </Button>
+                  </Link>
                 </div>
-                <div className="text-2xl font-bold">2.5T</div>
-                <p className="text-sm text-muted-foreground">CO₂ Saved</p>
               </CardContent>
             </Card>
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="flex justify-center mb-2">
-                  <Recycle className="h-8 w-8 text-primary" />
-                </div>
-                <div className="text-2xl font-bold">1.2K</div>
-                <p className="text-sm text-muted-foreground">Users Active</p>
-              </CardContent>
-            </Card>
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="flex justify-center mb-2">
-                  <Zap className="h-8 w-8 text-primary" />
-                </div>
-                <div className="text-2xl font-bold">850</div>
-                <p className="text-sm text-muted-foreground">Challenges Done</p>
-              </CardContent>
-            </Card>
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="flex justify-center mb-2">
-                  <Trophy className="h-8 w-8 text-primary" />
-                </div>
-                <div className="text-2xl font-bold">95%</div>
-                <p className="text-sm text-muted-foreground">Success Rate</p>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section className="py-12">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-balance mb-4">Everything You Need for Sustainable Living</h2>
-            <p className="text-lg text-muted-foreground text-balance max-w-2xl mx-auto">
-              Our comprehensive platform helps you understand, track, and reduce your environmental impact.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <Calculator className="h-6 w-6 text-primary" />
-                  <CardTitle>Carbon Calculator</CardTitle>
-                </div>
-                <CardDescription>
-                  Calculate your personal carbon footprint with our detailed questionnaire
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/calculator">
-                  <Button className="w-full">Start Calculating</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <Lightbulb className="h-6 w-6 text-primary" />
-                  <CardTitle>Eco Recommendations</CardTitle>
-                </div>
-                <CardDescription>Get personalized tips and actionable advice for sustainable living</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/recommendations">
-                  <Button className="w-full">View Tips</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <Trophy className="h-6 w-6 text-primary" />
-                  <CardTitle>Eco Challenges</CardTitle>
-                </div>
-                <CardDescription>
-                  Join daily, weekly, and monthly challenges to build sustainable habits
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/challenges">
-                  <Button className="w-full">Join Challenges</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <MessageCircle className="h-6 w-6 text-primary" />
-                  <CardTitle>AI Chat Assistant</CardTitle>
-                </div>
-                <CardDescription>Get instant answers to your sustainability questions from our AI bot</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/chatbot">
-                  <Button className="w-full">Start Chatting</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <BarChart3 className="h-6 w-6 text-primary" />
-                  <CardTitle>Analytics Dashboard</CardTitle>
-                </div>
-                <CardDescription>Track your progress and visualize your environmental impact over time</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/analytics">
-                  <Button className="w-full">View Analytics</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow border-primary/20">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Leaf className="h-6 w-6 text-primary" />
-                    <CardTitle>Quick Assessment</CardTitle>
-                  </div>
-                  <Badge variant="secondary">New</Badge>
-                </div>
-                <CardDescription>
-                  Take a 2-minute assessment to get started with personalized recommendations
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full bg-transparent">
-                  Take Assessment
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-      </main>
-    </div>
+          </section>
+        </main>
+      </div>
+    </AuthWrapper>
   )
 }
+
+
+//app/page.tsx

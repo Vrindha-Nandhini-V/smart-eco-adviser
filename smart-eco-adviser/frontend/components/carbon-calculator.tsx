@@ -9,7 +9,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Car, Home, Utensils, Trash2, ChevronLeft, ChevronRight, Calculator } from "lucide-react"
+import { Car, Home, Utensils, Trash2, ChevronLeft, ChevronRight, Calculator, CheckCircle } from "lucide-react"
+import { carbonAPI } from "@/lib/api"
+import { toast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 
 interface CalculatorData {
   carKm: number | string
@@ -65,6 +68,8 @@ export function CarbonCalculator() {
   const [currentStep, setCurrentStep] = useState(1)
   const [data, setData] = useState<CalculatorData>(initialData)
   const [results, setResults] = useState<{ total: number; breakdown: any } | null>(null)
+  const [saving, setSaving] = useState(false)
+  const router = useRouter()
 
   const updateData = (field: keyof CalculatorData, value: string | number) => {
     setData((prev) => ({ ...prev, [field]: value }))
@@ -107,6 +112,30 @@ export function CarbonCalculator() {
         waste: Math.round(wasteCO2 * 100) / 100,
       },
     })
+  }
+
+  const saveToBackend = async () => {
+    if (!results) return
+    
+    setSaving(true)
+    try {
+      await carbonAPI.saveCalculation(results.total, results.breakdown)
+      toast({
+        title: "Success!",
+        description: "Your carbon footprint has been saved. Check your analytics dashboard!",
+      })
+      setTimeout(() => {
+        router.push('/analytics')
+      }, 1500)
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save calculation",
+        variant: "destructive"
+      })
+    } finally {
+      setSaving(false)
+    }
   }
 
   const nextStep = () => {
@@ -157,7 +186,7 @@ export function CarbonCalculator() {
           {currentStep === 2 && <EnergyStep data={data} updateData={updateData} />}
           {currentStep === 3 && <DietStep data={data} updateData={updateData} />}
           {currentStep === 4 && <WasteStep data={data} updateData={updateData} />}
-          {currentStep === 5 && results && <ResultsStep results={results} />}
+          {currentStep === 5 && results && <ResultsStep results={results} onSave={saveToBackend} saving={saving} />}
 
           {/* Navigation */}
           <div className="flex justify-between pt-6">
@@ -432,29 +461,81 @@ function WasteStep({
   )
 }
 
-function ResultsStep({ results }: { results: { total: number; breakdown: any } }) {
+function ResultsStep({ results, onSave, saving }: { results: { total: number; breakdown: any }, onSave: () => void, saving: boolean }) {
+  const nationalAverage = 16000 // kg CO2e per year
+  const percentageVsAverage = ((nationalAverage - results.total) / nationalAverage) * 100
+
   return (
-    <div className="space-y-4">
-      <h3 className="text-xl font-semibold">Estimated annual footprint</h3>
-      <div className="text-2xl font-bold">{results.total} kg CO₂e</div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <div className="text-sm text-muted-foreground">Transportation</div>
-          <div className="font-medium">{results.breakdown.transportation} kg</div>
-        </div>
-        <div>
-          <div className="text-sm text-muted-foreground">Energy</div>
-          <div className="font-medium">{results.breakdown.energy} kg</div>
-        </div>
-        <div>
-          <div className="text-sm text-muted-foreground">Diet</div>
-          <div className="font-medium">{results.breakdown.diet} kg</div>
-        </div>
-        <div>
-          <div className="text-sm text-muted-foreground">Waste</div>
-          <div className="font-medium">{results.breakdown.waste} kg</div>
-        </div>
+    <div className="space-y-6">
+      <div className="text-center">
+        <h3 className="text-xl font-semibold mb-2">Your Annual Carbon Footprint</h3>
+        <div className="text-4xl font-bold text-green-600 mb-2">{results.total.toLocaleString()} kg CO₂e</div>
+        {percentageVsAverage > 0 ? (
+          <p className="text-sm text-muted-foreground">
+            <CheckCircle className="inline h-4 w-4 mr-1 text-green-600" />
+            {percentageVsAverage.toFixed(1)}% below national average!
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {Math.abs(percentageVsAverage).toFixed(1)}% above national average
+          </p>
+        )}
       </div>
+
+      <Card className="bg-green-50 border-green-200">
+        <CardHeader>
+          <CardTitle className="text-lg">Breakdown by Category</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                <Car className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Transportation</div>
+                <div className="font-semibold">{results.breakdown.transportation} kg</div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
+                <Home className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Energy</div>
+                <div className="font-semibold">{results.breakdown.energy} kg</div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+                <Utensils className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Diet</div>
+                <div className="font-semibold">{results.breakdown.diet} kg</div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
+                <Trash2 className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Waste</div>
+                <div className="font-semibold">{results.breakdown.waste} kg</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Button 
+        onClick={onSave} 
+        disabled={saving}
+        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+        size="lg"
+      >
+        {saving ? "Saving..." : "Save & View Analytics"}
+      </Button>
     </div>
   )
 }
